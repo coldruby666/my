@@ -1,0 +1,728 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="m">
+
+	<sql id="m_select">
+		/*앨범으로 검색*/
+		select @rno := @rno +1 as rno,
+		       m.g_cd,
+			   (
+                select x.nm
+				  from cd x
+				 where x.cd_nm = '장르코드'
+                   and x.cd = substr(m.g_cd,1,1)
+               ) as g_m_nm,
+			   (
+                select x.nm
+				  from cd x
+				 where x.cd_nm = '장르구분'
+                   and x.cd = m.g_cd
+               ) as g_d_nm,
+			   m.m_seq,
+			   m.m_no,
+			   m.m_nm,
+			   m.product,
+			   m.year,
+			   m.img_a,
+			   m.img_b,
+			   m.kind,
+			   m.cond,
+			   m.music,
+			   m.player,
+			   m.singer,
+			   m.playCnt,
+			   m.last_play_dt,
+			   <if test="fastSelect != null and fastSelect.equalsIgnoreCase('Y')">
+			   '' as ex,
+			   '' as memo
+			   </if>
+			   <if test="fastSelect != null and fastSelect.equalsIgnoreCase('N')">
+			   m.ex,
+			   m.memo
+			   </if>
+		  from m,
+		  	   (select @rno := 0) tmp
+		 where 1=1
+		   <if test="m_seq != null and m_seq != ''">
+		   and m.m_seq = #{m_seq}
+		   </if>
+		   <if test="g_cd != null and g_cd != ''">
+		   and m.g_cd = #{g_cd}
+		   </if>
+		   <if test="!(g_cd != null and g_cd != '') and (g_cd_m != null and g_cd_m != '')">
+		   and m.g_cd like concat(#{g_cd_m},'%')
+		   </if>
+		   and (
+		           Replace(upper(m.m_nm),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+		        or m.kind in (
+							  select cd from cd
+							   where cd_nm = '음반구분'
+								 and Replace(upper(nm),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+							 )
+		        or m.cond in (
+							  select cd from cd
+							   where cd_nm = '상태코드'
+								 and Replace(upper(nm),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+							 )
+				or Replace(upper(m.music),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+				or Replace(upper(m.player),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+				or Replace(upper(m.singer),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+		       )
+	</sql>
+
+	<resultMap id="m_result" type="java.util.HashMap">
+		<result property="g_cd" column="g_cd"/>
+		<result property="g_m_nm" column="g_m_nm"/>
+		<result property="g_d_nm" column="g_d_nm"/>
+		<result property="m_seq" column="m_seq"/>
+		<result property="m_no" column="m_no"/>
+		<result property="m_nm" column="m_nm"/>
+		<result property="product" column="product"/>
+		<result property="year" column="year"/>
+		<result property="img_a" column="img_a" jdbcType="BLOB" javaType="_byte[]"/>
+		<result property="img_b" column="img_b" jdbcType="BLOB" javaType="_byte[]"/>
+		<result property="kind" column="kind"/>
+		<result property="cond" column="cond"/>
+		<result property="music" column="music"/>
+		<result property="player" column="player"/>
+		<result property="singer" column="singer"/>
+		<result property="playCnt" column="playCnt"/>
+		<result property="last_play_dt" column="last_play_dt"/>
+		<result property="ex" column="ex"/>
+		<result property="memo" column="memo"/>
+	</resultMap>
+
+    <select id="selectMusicList" parameterType="java.util.HashMap" resultMap="m_result">
+    	select * from (
+    		select m.*,
+    			   ceil(rno/ #{pageSize}) AS page
+			  from (
+					 <include refid="m_select"/>
+					 order by
+					 		m.m_no
+			  	   ) m
+    		where 1=1
+    	) m
+    	where 1=1
+    	  <if test="paging != null and paging.equalsIgnoreCase('Y')">
+    	  and page = #{page}
+    	  </if>
+		;
+    </select>
+    
+    <select id="selectMusicList_Cnt" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+    	select count(1) as cnt
+    	  from (
+    		<include refid="m_select"/>
+    	) m
+    	;
+    </select>
+    
+    <!-- ########################################################################################### -->
+    
+    <!-- <sql id="d_select">
+		select @rno := @rno +1 as rno,
+			   m.g_cd,
+			   (
+                select x.nm
+				  from cd x
+				 where x.cd_nm = '장르코드'
+                   and x.cd = substr(m.g_cd,1,1)
+               ) as g_m_nm,
+			   (
+                select x.nm
+				  from cd x
+				 where x.cd_nm = '장르구분'
+                   and x.cd = m.g_cd
+               ) as g_d_nm,
+			   m.m_seq,
+			   m.m_no,
+			   m.m_nm,
+		       m.product,
+		       m.year,
+		       m.img_a,
+		       m.img_b,
+		       m.kind,
+		       m.cond,
+		       m.music,
+		       m.player,
+		       m.singer,
+		       m.playCnt,
+		       m.last_play_dt,
+		       m.ex,
+		       m.memo,
+		       d.d_no,
+		       d.side,
+		       d.d_nm,
+		       d.player as d_player,
+		       d.singer as d_singer,
+		       d.play_time
+		  from m, d,
+		  	   (select @rno := 0) tmp
+		 where m.m_seq = d.m_seq
+		   <if test="m_seq != null and m_seq != ''">
+		   and m.m_seq = #{m_seq}
+		   </if>
+		   <if test="g_cd != null and g_cd != ''">
+		   and m.g_cd = #{g_cd}
+		   </if>
+		   <if test="!(g_cd != null and g_cd != '') and (g_cd_m != null and g_cd_m != '')">
+		   and m.g_cd like concat(#{g_cd_m},'%')
+		   </if>
+		   and (
+		           Replace(upper(d.d_nm),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+		        or m.kind in (
+							  select cd from cd
+							   where cd_nm = '음반구분'
+								 and Replace(upper(nm),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+							 )
+		        or m.cond in (
+							  select cd from cd
+							   where cd_nm = '상태코드'
+								 and Replace(upper(nm),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+							 )
+				or Replace(upper(d.player),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+				or Replace(upper(d.singer),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+		       )
+    </sql> -->
+    
+    <sql id="d_select">
+		select m.g_cd,
+			   (
+                select x.nm
+				  from cd x
+				 where x.cd_nm = '장르코드'
+                   and x.cd = substr(m.g_cd,1,1)
+               ) as g_m_nm,
+			   (
+                select x.nm
+				  from cd x
+				 where x.cd_nm = '장르구분'
+                   and x.cd = m.g_cd
+               ) as g_d_nm,
+			   m.m_seq,
+			   m.m_no,
+			   m.m_nm,
+		       m.product,
+		       m.year,
+		       <if test="paging != null and paging.equalsIgnoreCase('Y')">
+		       '' as img_a,
+		       '' as img_b,
+		       </if>
+		       <if test="paging != null and paging.equalsIgnoreCase('N')">
+		       m.img_a,
+		       m.img_b,
+		       </if>
+		       m.kind,
+		       m.cond,
+		       m.music,
+		       m.player,
+		       m.singer,
+		       m.playCnt,
+		       m.last_play_dt,
+		       <if test="paging != null and paging.equalsIgnoreCase('Y')">
+		       '' as ex,
+		       </if>
+		       <if test="paging != null and paging.equalsIgnoreCase('N')">
+		       m.ex,
+		       </if>
+		       m.memo,
+		       d.d_seq,
+		       d.d_no,
+		       d.side,
+		       d.d_nm,
+		       d.player as d_player,
+		       d.singer as d_singer,
+		       d.play_time
+		  from m, d
+		 where m.m_seq = d.m_seq
+		   <if test="m_seq != null and m_seq != ''">
+		   and m.m_seq = #{m_seq}
+		   </if>
+		   <if test="g_cd != null and g_cd != ''">
+		   and m.g_cd = #{g_cd}
+		   </if>
+		   <if test="!(g_cd != null and g_cd != '') and (g_cd_m != null and g_cd_m != '')">
+		   and m.g_cd like concat(#{g_cd_m},'%')
+		   </if>
+		   and (
+		           Replace(upper(d.d_nm),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+		        or m.kind in (
+							  select cd from cd
+							   where cd_nm = '음반구분'
+								 and Replace(upper(nm),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+							 )
+		        or m.cond in (
+							  select cd from cd
+							   where cd_nm = '상태코드'
+								 and Replace(upper(nm),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+							 )
+				or Replace(upper(d.player),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+				or Replace(upper(d.singer),' ','') like concat('%', Replace(upper(#{searchTxt}),' ',''), '%')
+		       )
+    </sql>
+    
+	<resultMap id="d_result" type="java.util.HashMap">
+		<result property="g_cd" column="g_cd"/>
+		<result property="g_m_nm" column="g_m_nm"/>
+		<result property="g_d_nm" column="g_d_nm"/>
+		<result property="m_seq" column="m_seq"/>
+		<result property="m_no" column="m_no"/>
+		<result property="m_nm" column="m_nm"/>
+		<result property="product" column="product"/>
+		<result property="year" column="year"/>
+		<result property="img_a" column="img_a" jdbcType="BLOB" javaType="_byte[]"/>
+		<result property="img_b" column="img_b" jdbcType="BLOB" javaType="_byte[]"/>
+		<result property="kind" column="kind"/>
+		<result property="cond" column="cond"/>
+		<result property="music" column="music"/>
+		<result property="player" column="player"/>
+		<result property="singer" column="singer"/>
+		<result property="playCnt" column="playCnt"/>
+		<result property="last_play_dt" column="last_play_dt"/>
+		<result property="ex" column="ex"/>
+		<result property="d_seq" column="d_seq"/>
+		<result property="d_no" column="d_no"/>
+		<result property="memo" column="memo"/>
+		<result property="d_no" column="d_no"/>
+		<result property="side" column="side"/>
+		<result property="d_nm" column="d_nm"/>
+		<result property="d_player" column="d_player"/>
+		<result property="d_singer" column="d_singer"/>
+		<result property="play_time" column="play_time"/>
+	</resultMap>
+    
+    <!-- <select id="selectMusicList_Detail" parameterType="java.util.HashMap" resultMap="d_result">
+    	select * from (
+    		select m.*,
+    			   ceil(rno/ #{pageSize}) AS page
+			  from (
+					 <include refid="d_select" />
+					 order by
+					 		m.g_cd,
+					 		m.m_no,
+					 		d.d_no
+			  	   ) m
+    		where 1=1
+    	) m
+    	where 1=1
+    	  <if test="paging != null and paging.equalsIgnoreCase('Y')">
+    	  and page = #{page}
+    	  </if>
+		;
+    </select> -->
+    
+    <select id="selectMusicList_Detail" parameterType="java.util.HashMap" resultMap="d_result">
+    	select * from (
+			<include refid="d_select" />
+			order by
+					m.g_cd,
+					m.m_no,
+					d.d_no
+    	) m
+    	where 1=1
+    	<if test="paging != null and paging.equalsIgnoreCase('Y')">
+    	limit #{limitFrom}, #{limitTo}
+    	</if>
+		;
+    </select>
+    
+    <select id="selectMusicList_Detail_Cnt" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+    	select count(1) as cnt
+    	  from (
+    		<include refid="d_select"/>
+    	) m
+    	;
+    </select>
+    
+    <!-- #############################################################################################333 -->
+    
+    <select id="selectGroupList_Main" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        select cd,
+               nm
+          from cd
+         where cd_nm = '장르코드'
+         order by
+               cd_seq;
+    </select>
+    
+    <select id="selectGroupList_Detail" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        select m.cd,
+               concat('[ ',
+					  (select x.nm from cd x where x.cd_nm = '장르코드' and x.cd = substr(m.cd,1,1)),
+					  ' ] ',
+                      m.nm) as nm
+          from cd m
+         where m.cd_nm = '장르구분'
+           and m.cd like concat(#{g_cd_m},'%')
+         order by
+               m.cd_seq;
+    </select>
+    
+    <update id="updateCountAlbum">
+    	update m
+		   set playCnt = ifnull(playCnt,0) +1,
+		       last_play_dt = curdate() +0
+		 where m_seq = #{m_seq};
+    </update>
+    
+    <select id="selectCodeList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        select cd_nm,
+        	   cd_seq,
+        	   cd,
+        	   nm 
+          from cd
+         where 1=1
+         order by
+               cd_nm, cd_seq;
+    </select>
+    
+    <resultMap id="xls_m_result" type="java.util.LinkedHashMap">
+		<result property="g_cd" column="g_cd" javaType="String"/>
+		<result property="m_seq" column="m_seq" javaType="String"/>
+		<result property="m_no" column="m_no" javaType="String"/>
+		<result property="m_nm" column="m_nm" javaType="String"/>
+		<result property="product" column="product" javaType="String"/>
+		<result property="year" column="year" javaType="String"/>
+		<result property="img_a" column="img_a" jdbcType="BLOB" javaType="_byte[]"/>
+		<result property="img_b" column="img_b" jdbcType="BLOB" javaType="_byte[]"/>
+		<result property="kind" column="kind" javaType="String"/>
+		<result property="cond" column="cond" javaType="String"/>
+		<result property="music" column="music" javaType="String"/>
+		<result property="player" column="player" javaType="String"/>
+		<result property="singer" column="singer" javaType="String"/>
+		<result property="playCnt" column="playCnt" javaType="String"/>
+		<result property="last_play_dt" column="last_play_dt" javaType="String"/>
+		<result property="ex" column="ex" javaType="String"/>
+		<result property="memo" column="memo" javaType="String"/>
+	</resultMap>
+    
+    <!-- <select id="xls_export_m" parameterType="java.util.HashMap" resultType="java.util.HashMap"> -->
+    <select id="xls_export_m" parameterType="java.util.HashMap" resultMap="xls_m_result">
+        select g_cd,
+               convert(m_no, char(10)) as m_no,
+               convert(m_nm, char(1000)) as m_nm,
+               product,
+               year,
+               img_a,
+               img_b,
+               kind,
+               cond,
+               music,
+               player,
+               singer,
+               playCnt,
+               last_play_dt,
+               ex,
+               memo
+          from m
+         order by
+         	   g_cd,
+         	   m_no;
+    </select>
+    
+    <select id="xls_export_d" parameterType="java.util.HashMap" resultType="java.util.LinkedHashMap">
+        select m.g_cd,
+        	   m.m_no,
+        	   d.d_no,
+        	   d.side,
+        	   d.d_nm,
+        	   d.music,
+        	   d.player,
+        	   d.singer,
+        	   d.play_time
+          from m, d
+         where m.m_seq = d.m_seq
+         order by
+         	   d.m_seq,
+               d.d_seq;
+    </select>
+    
+    <select id="xls_export_cd" parameterType="java.util.HashMap" resultType="java.util.LinkedHashMap">
+        select *
+          from cd
+         order by
+         	   cd_nm,
+               cd_seq;
+    </select>
+    
+    <insert id="import_m" parameterType="java.util.List">
+    	INSERT INTO m
+		(
+		g_cd,
+		m_seq,
+		m_no,
+		m_nm,
+		product,
+		year,
+		img_a,
+		img_b,
+		kind,
+		cond,
+		music,
+		player,
+		singer,
+		playCnt,
+		last_play_dt,
+		ex,
+		memo
+		)
+		VALUES
+		<foreach collection="list" item="item" index="index" open="" close="" separator="," >
+		(
+		#{item.g_cd},
+		(#{index}+1),
+		#{item.m_no},
+		#{item.m_nm},
+		#{item.product},
+		#{item.year},
+		#{item.img_a, javaType=byte[], jdbcType=BLOB, typeHandler=org.apache.ibatis.type.BlobTypeHandler},
+		#{item.img_b, javaType=byte[], jdbcType=BLOB, typeHandler=org.apache.ibatis.type.BlobTypeHandler},
+		#{item.kind},
+		#{item.cond},
+		#{item.music},
+		#{item.player},
+		#{item.singer},
+		#{item.playCnt},
+		#{item.last_play_dt},
+		#{item.ex},
+		#{item.memo}
+		)
+		</foreach>
+		;
+    </insert>
+    
+    <insert id="import_d" parameterType="java.util.List">
+     	INSERT INTO d
+		(
+		m_seq,
+		d_seq,
+		d_no,
+		side,
+		d_nm,
+		music,
+		player,
+		singer,
+		play_time
+		)
+		VALUES
+		<foreach collection="list" item="item" index="index" open="" close="" separator="," >
+		/* d - ${index} */
+		(
+		(select m_seq from m as tmp where g_cd = #{item.g_cd} and m_no = #{item.m_no}),
+		#{item.d_seq},
+		#{item.d_no},
+		#{item.side},
+		#{item.d_nm},
+		#{item.music},
+		#{item.player},
+		#{item.singer},
+		#{item.play_time}
+		)
+		</foreach>
+		;
+    </insert>
+    
+    <insert id="import_cd" parameterType="java.util.List">
+    	INSERT INTO cd
+		(
+		cd_nm,
+		cd_seq,
+		cd,
+		nm
+		)
+		VALUES
+		<foreach collection="list" item="item" index="index" open="" close="" separator="," >
+		(
+		#{item.cd_nm},
+		#{item.cd_seq},
+		#{item.cd},
+		#{item.nm}
+		)
+		</foreach>
+		;
+	</insert>
+    
+    <insert id="clearDatabase">
+		SET FOREIGN_KEY_CHECKS = 0;
+		truncate table d;
+		truncate table m;
+		truncate table cd;
+		SET FOREIGN_KEY_CHECKS = 1;
+    </insert>
+    
+    <insert id="insertCode">
+    	INSERT INTO cd
+		(
+		cd_nm,
+		cd_seq,
+		cd,
+		nm
+		)
+		VALUES
+		(
+		#{cd_nm},
+		#{cd_seq},
+		#{cd},
+		#{nm}
+		)
+    	;
+    </insert>
+    
+    <update id="updateCode">
+    	UPDATE cd
+    	   SET cd = #{cd},
+    	   	   nm = #{nm}
+    	WHERE cd_nm = #{cd_nm}
+    	  AND cd_seq = #{cd_seq}
+    	;
+    </update>
+    
+    <delete id="deleteCode">
+    	DELETE FROM cd
+    	WHERE cd_nm = #{cd_nm}
+    	  AND cd_seq = #{cd_seq}
+    	;
+    </delete>
+    
+    <select id="selectCdData" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        select m.cd,
+               m.nm
+          from cd m
+         where m.cd_nm = #{cd_nm}
+         order by
+               m.cd_seq;
+    </select>
+    
+    <insert id="insertM">
+    	INSERT INTO m
+		(
+		g_cd,
+		m_seq,
+		m_no,
+		m_nm,
+		product,
+		year,
+		img_a,
+		img_b,
+		kind,
+		cond,
+		music,
+		player,
+		singer,
+		playCnt,
+		last_play_dt,
+		ex,
+		memo
+		)
+		VALUES
+		(
+		#{g_cd},
+		(SELECT 1 + COALESCE((select max(m_seq) from m as tmp), 0)),
+		(SELECT 1 + COALESCE((select max(m_no) from m as tmp where g_cd = #{g_cd} group by g_cd), 0)),
+		#{m_nm},
+		#{product},
+		#{year},
+		#{img_a, javaType=byte[], jdbcType=BLOB, typeHandler=org.apache.ibatis.type.BlobTypeHandler},
+		#{img_b, javaType=byte[], jdbcType=BLOB, typeHandler=org.apache.ibatis.type.BlobTypeHandler},
+		#{kind},
+		#{cond},
+		#{music},
+		#{player},
+		#{singer},
+		#{playCnt},
+		#{last_play_dt},
+		#{ex},
+		#{memo}
+		)
+    	;
+    </insert>
+    
+    <update id="updateM">
+    	UPDATE m
+    	SET
+             g_cd         = #{g_cd},
+             m_seq        = #{m_seq},
+             m_no         = #{m_no},
+             m_nm         = #{m_nm},
+             product      = #{product},
+             year         = #{year},
+             img_a        = #{img_a},
+             img_b        = #{img_b},
+             kind         = #{kind},
+             cond         = #{cond},
+             music        = #{music},
+             player       = #{player},
+             singer       = #{singer},
+             playCnt      = #{playCnt},
+             last_play_dt = #{last_play_dt},
+             ex           = #{ex},
+             memo         = #{memo}
+    	WHERE m_seq       = #{m_seq}
+    	;
+    </update>
+    
+    <delete id="deleteM">
+    	DELETE FROM m
+    	WHERE m_seq       = #{m_seq}
+    	;
+    </delete>
+    
+    <delete id="deleteM_d">
+    	DELETE FROM d
+    	WHERE m_seq       = #{m_seq}
+    	;
+    </delete>
+    
+    <insert id="insertD">
+    	INSERT INTO d
+		(
+		m_seq,
+		d_seq,
+		d_no,
+		side,
+		d_nm,
+		music,
+		player,
+		singer,
+		play_time
+		)
+		VALUES
+		(
+		#{m_seq},
+		(SELECT 1 + COALESCE((select max(d_seq) from d as tmp), 0)),
+		#{d_no},
+		#{side},
+		#{d_nm},
+		#{music},
+		#{player},
+		#{singer},
+		#{play_time}
+		)
+    	;
+    </insert>
+    
+    <update id="updateD">
+    	UPDATE d
+    	SET
+             d_no         = #{d_no},
+             side         = #{side},
+             d_nm         = #{d_nm},
+             music        = #{music},
+             player       = #{player},
+             singer       = #{singer},
+             play_time    = #{play_time}
+    	WHERE m_seq       = #{m_seq}
+    	  AND d_seq       = #{d_seq}
+    	;
+    </update>
+    
+    <delete id="deleteD">
+    	DELETE FROM d
+    	WHERE m_seq       = #{m_seq}
+    	  AND d_seq       = #{d_seq}
+    	;
+    </delete>
+    
+</mapper>
