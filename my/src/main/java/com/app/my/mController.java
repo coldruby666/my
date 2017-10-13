@@ -626,8 +626,8 @@ public class mController {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Calendar c1 = Calendar.getInstance();
         String curDt = sdf.format(c1.getTime());
-		
-		String exportDir = _BACKUP_DIR + "/" + curDt;
+        
+        String exportDir = _BACKUP_DIR + "/" + curDt + "_" + hashMap.get("g_cd_m").toString();
 		
 		HashMap<String,Object> hm = new HashMap<String,Object>();
 		
@@ -833,8 +833,6 @@ public class mController {
 		
 		for (File tempFile : fileList) {
 			if (tempFile.isFile()) {
-				
-				System.out.println("tempFile.getName() >>>>>> " + tempFile.getName());
 				
 				if (tempFile.getName().equals("m.xls"))
 					chk_m = true;

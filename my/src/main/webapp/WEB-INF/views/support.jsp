@@ -92,6 +92,44 @@ padding-right: 0px; }
 .selected
 { background-color: brown;
 color: #FFF; }
+
+			div#g_cd_m_box {
+				position: relative;
+				width: 100%;
+				height: 40px;
+				line-height:40px;
+				border:1px solid #24b3d1;
+				border-radius:4px;
+				text-transform:uppercase;
+				background:#fff;
+			}
+			div#g_cd_m_box label {
+			    position: absolute;
+			    width: 100%;
+			    font-size:.86em;
+			    color:#24b3d1;
+			    top:0;
+			    left:0;
+			    padding:0 5%;
+			}
+			div#g_cd_m_box label:after {
+			    content:'▼';
+			    width:40px;
+			    height:40px;
+			    position:absolute;
+			    top:0;
+			    right:0;
+			    font-size:.76em;
+			    color:#fff;
+			    text-align:center;
+			    background:#24b3d1;
+			}
+			div#g_cd_m_box select#g_cd_m {
+			    width: 100%;
+			    height: 40px;
+			    opacity: 0;
+			    filter: alpha(opacity=0)/* IE 8 */;
+			}
 		</style>
 	</head>
 	<body>
@@ -136,6 +174,17 @@ color: #FFF; }
 								<br>
 								<br>
 								<br>
+								<div id="g_cd_m_box">
+									<label for="g_cd_m">장르(대) : 전체</label>
+									<select id="g_cd_m" title="검색할 장르 선택">
+										<option value="" selected="selected">장르(대) : 전체</option>
+										<option value="C">Classic</option>
+										<option value="K">Korean Pop</option>
+										<option value="P">Pop</option>
+										<option value="J">Jazz</option>
+										<option value="W">World Music</option>
+									</select>
+								</div>
 								<button id="btn_export" class="w3-btn w3-white w3-border w3-border-blue w3-round">백업</button>
 								백업 폴더의 오늘일자+시간 폴더에 생성됨
 							</section>
@@ -186,6 +235,7 @@ color: #FFF; }
 			
 			window.onload = function() {
 				console.log("window.onload");
+				makeSelectBox();
 				getBackupFolderList();
 			};
 			
@@ -333,7 +383,7 @@ color: #FFF; }
 				var _this = $(this);
 				_this.attr('disabled', 'disabled');
 				
-				var r = confirm("백업를 하시겠습니까?\n위치 : C:/myMusicWeb/backup_xls/년월일_시분초");
+				var r = confirm("백업를 하시겠습니까?\n위치 : C:/myMusicWeb/backup_xls/년월일_시분초_장르코드");
 				if (r == false) {
 					_this.removeAttr('disabled');
 					return;
@@ -349,6 +399,7 @@ color: #FFF; }
 				}
 
 				var data = new Object();
+				data.g_cd_m = $('#g_cd_m option:selected').val();
 
 				$.ajax({
 					type : 'POST',
@@ -372,6 +423,39 @@ color: #FFF; }
 					_this.removeAttr('disabled');
 				});
 			});
+			
+			function makeSelectBox() {
+				console.log("makeSelectBox()");
+				
+				var data = new Object();
+				
+				$.ajax({
+			        type: 'POST',
+			        url: 'selectGroupList.do',
+			        dataType: 'json',
+			        data: JSON.stringify(data),
+			        contentType: "application/json; charset=UTF-8",
+			        success: function(data, status){
+			        	if(data.length > 0) {
+			        		$('#g_cd_m').find("option").remove().end().append("<option value=''>장르(대) : 전체</option>");
+			        		$.each(data, function(index,value){
+			        			$('#g_cd_m').append("<option value='" + value.cd + "'>" + value.nm + "</option> ");
+		                    });
+			        		
+							var select_g_cd_m = $("select#g_cd_m");
+			        		select_g_cd_m.change(function(){
+			        			console.log("<<m.change>>");
+			        	        var select_name = $(this).children("option:selected").text();
+			        	        console.log("<<m.change>> select_name => " + select_name);
+			        	        $(this).siblings("label").text(select_name);
+			        	    });
+			        	}
+			        },
+			        error: function(request, status, error) {
+			        	$('#g_cd_m').find("option").remove().end().append("<option value=''>장르(대) : 전체</option>");
+			        }
+				});
+			}
 		</script>
 	</body>
 </html>

@@ -100,6 +100,7 @@
 			  from (
 					 <include refid="m_select"/>
 					 order by
+					 		m.g_cd,
 					 		m.m_no
 			  	   ) m
     		where 1=1
@@ -418,6 +419,10 @@
                ex,
                memo
           from m
+         where 1=1
+           <if test="!(g_cd != null and g_cd != '') and (g_cd_m != null and g_cd_m != '')">
+		   and g_cd like concat(#{g_cd_m},'%')
+		   </if>
          order by
          	   g_cd,
          	   m_no;
@@ -435,6 +440,9 @@
         	   d.play_time
           from m, d
          where m.m_seq = d.m_seq
+           <if test="!(g_cd != null and g_cd != '') and (g_cd_m != null and g_cd_m != '')">
+		   and m.g_cd like concat(#{g_cd_m},'%')
+		   </if>
          order by
          	   d.m_seq,
                d.d_seq;

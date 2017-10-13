@@ -199,6 +199,8 @@
 								</div>
 							</section>
 						</div>
+						<div class='6u 12u(mobile)' id="albumfooterInfo">
+						</div>
 					</div>
 					
 				</div>
@@ -352,52 +354,59 @@
 			        		// album detail page url set
 		        			var albumPageUrl = "";
 		        			
-		        			var dataDiv = "<article class='blog-post'>" +
+			        		var dataDiv = "<article class='blog-post'>" +
 											"<h2>" + data.rows[0].g_m_nm + " > " + data.rows[0].g_d_nm + " > " + data.rows[0].m_no + "번 앨범</h2>" +
 											"<a class='comments' href='#'>" + data.records + "개 트랙</a>" +
 											"<h3>" + data.rows[0].m_nm + "</h3>" +
 											"<img src='" + src_Img_a + "' class='top blog-post-image' />" +
-											//"<img src='" + src_Img_b + "' class='big-image-list' />" +
-											"<table class='table1'>" +
-											"<tbody>" +
-											"<tr>" +
-											"<th scope='row'>재생함</th>" +
-											"<td><a id='albumCntBtn' class='button'>♬</a></td>" +
-											"</tr>" +
-											"<tr>" +
-												"<th scope='row'>노래</th>" +
-												"<td>" + data.rows[0].singer + "</td>" +
-											"</tr>" +
-											"<tr>" +
-												"<th scope='row'>제작사</th>" +
-												"<td>" + data.rows[0].product + "</td>" +
-											"</tr>" +
-											"<tr>" +
-												"<th scope='row'>작곡</th>" +
-												"<td>" + data.rows[0].music + "</td>" +
-											"</tr>" +
-											"<tr>" +
-												"<th scope='row'>종류</th>" +
-												"<td>" + data.rows[0].kind + "</td>" +
-											"</tr>" +
-											"<tr>" +
-												"<th scope='row'>재생건</th>" +
-												"<td>" + data.rows[0].playCnt + "</td>" +
-											"</tr>" +
-											"<tr>" +
-												"<th scope='row'>재생일</th>" +
-												"<td>" + data.rows[0].last_play_dt + "</td>" +
-											"</tr>" +
-											"<tr>" +
-												"<th scope='row'>설명</th>" +
-												"<td style='text-align:left;'>" + data.rows[0].ex.replace(/\r\n|\n|\r/g, '<br />') + "</td>" +
-											"</tr>" +
-											"</tbody>" +
-											"</table>" +
+											"<img src='" + src_Img_b + "' class='top blog-post-image' />" +
 											"</article>";
+							
 							var $dataDiv = $(dataDiv);
 							$dataDiv.attr('id','data' + data.rows[0].m_seq);
 							$("#albumHeaderInfo").append($dataDiv);
+							
+							var albumfooterDiv = "<article class='blog-post'>" +
+													"<table class='table1'>" +
+													"<tbody>" +
+													"<tr>" +
+													"<th scope='row'>재생함</th>" +
+													"<td><a id='albumCntBtn' class='button'>♬</a></td>" +
+													"</tr>" +
+													"<tr>" +
+														"<th scope='row'>노래</th>" +
+														"<td>" + data.rows[0].singer + "</td>" +
+													"</tr>" +
+													"<tr>" +
+														"<th scope='row'>제작사</th>" +
+														"<td>" + data.rows[0].product + "</td>" +
+													"</tr>" +
+													"<tr>" +
+														"<th scope='row'>작곡</th>" +
+														"<td>" + data.rows[0].music + "</td>" +
+													"</tr>" +
+													"<tr>" +
+														"<th scope='row'>종류</th>" +
+														"<td>" + data.rows[0].kind + "</td>" +
+													"</tr>" +
+													"<tr>" +
+														"<th scope='row'>재생건</th>" +
+														"<td>" + data.rows[0].playCnt + "</td>" +
+													"</tr>" +
+													"<tr>" +
+														"<th scope='row'>재생일</th>" +
+														"<td>" + data.rows[0].last_play_dt + "</td>" +
+													"</tr>" +
+													"<tr>" +
+														"<th scope='row'>설명</th>" +
+														"<td style='text-align:left;'>" + data.rows[0].ex.replace(/\r\n|\n|\r/g, '<br />') + "</td>" +
+													"</tr>" +
+													"</tbody>" +
+													"</table>" +
+													"</article>";
+													
+							var $albumfooterDiv = $(albumfooterDiv);
+							$("#albumfooterInfo").append($albumfooterDiv);
 							
 							$('#albumCntBtn').click(function(){
 								console.log("albumCntBtn click!");
