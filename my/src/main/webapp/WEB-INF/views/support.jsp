@@ -121,8 +121,10 @@ color: #FFF; }
 					<div class="row main-row" id="result_div">
 						<div class='6u 12u(mobile)'>
 							<section>
+								
 								<input type="text" id="txt_import_dir" value="" readonly />
 								<button id="btn_import" class="w3-btn w3-white w3-border w3-border-blue w3-round">복구</button>
+								<button id="btn_add" class="w3-btn w3-white w3-border w3-border-blue w3-round">추가</button>
 								<table class='contacts' cellspacing='0' summary='Contacts template'>
 									<tr>
 										<td class='contactDept' colspan='2'>복구 폴더 리스트</td>
@@ -256,6 +258,52 @@ color: #FFF; }
 				$.ajax({
 					type : 'POST',
 					url : 'xls_import.do',
+					dataType : 'json',
+					data : JSON.stringify(data),
+					contentType : "application/json; charset=UTF-8",
+					success : function(data, status) {
+						alert("excel import success!");
+					},
+					error : function(request, status, error) {
+						alert("excel import error!");
+					},
+					beforeSend : function() {
+						$('.wrap-loading').removeClass('display-none');
+					},
+					complete : function() {
+						$('.wrap-loading').addClass('display-none');
+					}
+				}).done(function() {
+					_this.removeAttr('disabled');
+				});
+
+			});
+			
+			$("#btn_add").on("click", function(e) {
+				console.log("btn_add.click()");
+
+				e.stopPropagation();
+				console.log("$$$$" + $("input[type='text'][id='txt_import_dir']").val());
+				if ($("input[type='text'][id='txt_import_dir']").val() == "") {
+					alert("추가할 폴더를 선택하세요");
+					return;
+				}
+
+				var _this = $(this);
+				_this.attr('disabled', 'disabled');
+				
+				var r = confirm("추가를 하시겠습니까?\n");
+				if (r == false) {
+					_this.removeAttr('disabled');
+					return;
+				}
+				
+				var data = new Object();
+				data.txt_import_dir = $('#txt_import_dir').val();
+
+				$.ajax({
+					type : 'POST',
+					url : 'xls_add.do',
 					dataType : 'json',
 					data : JSON.stringify(data),
 					contentType : "application/json; charset=UTF-8",

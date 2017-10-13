@@ -356,12 +356,94 @@ public class mController {
 		list_d = xlsUtil.xlsToList (importDir, _BACKUP_XLS_FILE_NAME_D);
 		list_cd = xlsUtil.xlsToList (importDir, _BACKUP_XLS_FILE_NAME_CD);
 		
-		System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>> !!!!!!!!!!!!!!!!!!!!!!!!!!11");
-		System.out.println(list_m.toString());
-		System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>> !!!!!!!!!!!!!!!!!!!!!!!!!!22");
-		System.out.println(list_d.toString());
-		System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>> !!!!!!!!!!!!!!!!!!!!!!!!!!33");
-		System.out.println(list_cd.toString());
+		try{
+			
+			if (list_m.size() == 0 || list_d.size() == 0 || list_cd.size() == 0) {
+				hm.put("xls_read_error", 1 );
+				hm.put("msg", "백업할 데이터가 없습니다.");
+				hm.put("stat_clear", stat_clear );
+				hm.put("stat_m", stat_m );
+				hm.put("stat_d", stat_d );
+				hm.put("stat_cd", stat_cd );
+			    return hm;
+			}
+			
+			// d 테이블 insert전 d.g_cd, d.m_no 내부 seq순번 삽입
+			int dseq = 0;
+			HashMap<String,Object> hm_d = null;
+			for (int i = 0; i < list_d.size(); i++) {
+				hm_d = list_d.get(i);
+				hm_d.put("d_seq", dseq++);
+			}
+			
+//			Collections.sort(list_d, new Comparator<Map<String, Object >>() {
+//
+//	            @Override
+//
+//	            public int compare(Map<String, Object> p1, Map<String, Object> p2) {
+//	            	
+//	            	int gcd_Cmp = (p1.get("g_cd").toString()).compareTo(p2.get("g_cd").toString());
+//	            	if (gcd_Cmp != 0)
+//	            		return gcd_Cmp;
+//	            	
+//	            	int mno_Cmp = (p1.get("m_no").toString()).compareTo(p2.get("m_no").toString());
+//	            	if (mno_Cmp != 0)
+//	            		return mno_Cmp;
+//	            	
+//	            	return (p1.get("d_no").toString()).compareTo(p2.get("d_no").toString());
+//	            }
+//
+//	        });
+			
+//			logger.debug(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>test start");
+//			for(int i = 0; i < list_d.size(); i++) {
+//				hm_d = list_d.get(i);
+//				logger.debug("<<" + i + ">>" + hm_d.get("g_cd").toString() + "/" + hm_d.get("m_no").toString());
+//			}
+//			logger.debug(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>test end");
+			
+			stat_clear = service.clearDatabase();
+			stat_m = service.xls_import ("import_m", list_m);
+			stat_d = service.xls_import ("import_d", list_d);
+			stat_cd = service.xls_import ("import_cd", list_cd);
+	    } catch(Exception e){
+	        e.printStackTrace();
+	    }
+		
+		hm.put("xls_read_error", 0 );
+		hm.put("msg", "성공");
+		hm.put("stat_clear", stat_clear );
+		hm.put("stat_m", stat_m );
+		hm.put("stat_d", stat_d );
+		hm.put("stat_cd", stat_cd );
+	    return hm;
+	}
+	
+	@RequestMapping(value = "/xls_add")
+	@ResponseBody
+	public HashMap<String,Object> xls_add(@RequestBody HashMap<String,Object> hashMap) {
+		logger.debug("<<xls_add>>");
+		logger.debug("<<hashMap>> " + hashMap.toString());
+		
+		String importDir = _BACKUP_DIR + "/" + hashMap.get("txt_import_dir");
+		
+		HashMap<String,Object> hm = new HashMap<String,Object>();
+		int stat_m = 0;
+		int stat_d = 0;
+		int stat_cd = 0;
+		int stat_clear = 0;
+		hm.put("stat_clear", stat_clear );
+		hm.put("stat_m", stat_m );
+		hm.put("stat_d", stat_d );
+		hm.put("stat_cd", stat_cd );
+		
+		List<HashMap<String,Object>> list_m = null;
+		List<HashMap<String,Object>> list_d = null;
+		List<HashMap<String,Object>> list_cd = null;
+
+		list_m = xlsUtil.xlsToList (importDir, _BACKUP_XLS_FILE_NAME_M);
+		list_d = xlsUtil.xlsToList (importDir, _BACKUP_XLS_FILE_NAME_D);
+		list_cd = xlsUtil.xlsToList (importDir, _BACKUP_XLS_FILE_NAME_CD);
 		
 		try{
 			
@@ -402,14 +484,14 @@ public class mController {
 //
 //	        });
 			
-			logger.debug(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>test start");
-			for(int i = 0; i < list_d.size(); i++) {
-				hm_d = list_d.get(i);
-				logger.debug("<<" + i + ">>" + hm_d.get("g_cd").toString() + "/" + hm_d.get("m_no").toString());
-			}
-			logger.debug(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>test end");
+//			logger.debug(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>test start");
+//			for(int i = 0; i < list_d.size(); i++) {
+//				hm_d = list_d.get(i);
+//				logger.debug("<<" + i + ">>" + hm_d.get("g_cd").toString() + "/" + hm_d.get("m_no").toString());
+//			}
+//			logger.debug(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>test end");
 			
-			stat_clear = service.clearDatabase();
+//			stat_clear = service.clearDatabase();
 			stat_m = service.xls_import ("import_m", list_m);
 			stat_d = service.xls_import ("import_d", list_d);
 			stat_cd = service.xls_import ("import_cd", list_cd);
@@ -725,7 +807,7 @@ public class mController {
 			File []fileList = dirFile.listFiles();
 			
 			for (File tempFile : fileList) {
-				if (tempFile.isDirectory()) {
+				if (tempFile.isDirectory() && !tempFile.getName().contentEquals(".zip")) {
 					HashMap<String,Object> hm = new HashMap<String,Object>();
 					hm.put("dirName", tempFile.getName());
 					hm.put("checkResult", checkBackupFolderValidation( _BACKUP_DIR + "/" + tempFile.getName()) );

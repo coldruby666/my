@@ -1,7 +1,9 @@
 package com.app.my;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -95,6 +97,19 @@ public class mDaoImpl implements mDao {
 	@Override
 	public int xls_import(String sqlId, List<HashMap<String,Object>> list) throws Exception {
 		logger.info("dao - xls_import");
+		
+		if (sqlId.equals("import_m")) {
+			Map mp = session.selectOne(namespace + "." + "m_max_seq");
+			long i_maxseq = (long) mp.get("max_seq");
+			
+			Iterator<HashMap<String, Object>> iter = list.iterator();
+			while (iter.hasNext()) {
+				HashMap<String,Object> hm = iter.next();
+				hm.put("max_seq", i_maxseq);
+			}
+			
+		}
+		
 		return session.insert (namespace + "." + sqlId, list);
 	}
 	

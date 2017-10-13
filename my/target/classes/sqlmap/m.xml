@@ -319,6 +319,7 @@
 			order by
 					m.g_cd,
 					m.m_no,
+					d.side,
 					d.d_no
     	) m
     	where 1=1
@@ -472,7 +473,7 @@
 		<foreach collection="list" item="item" index="index" open="" close="" separator="," >
 		(
 		#{item.g_cd},
-		(#{index}+1),
+		(#{item.max_seq} +#{index} +1),
 		#{item.m_no},
 		#{item.m_nm},
 		#{item.product},
@@ -490,6 +491,9 @@
 		#{item.memo}
 		)
 		</foreach>
+		on duplicate key update
+			g_cd = values(g_cd),
+			m_no = values(m_no)
 		;
     </insert>
     
@@ -521,6 +525,10 @@
 		#{item.play_time}
 		)
 		</foreach>
+		on duplicate key update
+			m_seq = m_seq,
+			d_seq = d_seq,
+			d_no = values(d_no)
 		;
     </insert>
     
@@ -541,6 +549,11 @@
 		#{item.nm}
 		)
 		</foreach>
+		on duplicate key update
+			cd_nm = values(cd_nm),
+			cd_seq = values(cd_seq),
+			cd = values(cd),
+			nm = values(nm)
 		;
 	</insert>
     
@@ -724,5 +737,10 @@
     	  AND d_seq       = #{d_seq}
     	;
     </delete>
+    
+    <select id="m_max_seq" resultType="hashmap" >
+		/*m의 max(m_seq)값 조회*/
+		SELECT COALESCE((select max(m_seq) from m)) as max_seq
+	</select>
     
 </mapper>
