@@ -130,7 +130,7 @@ color: #FFF; }
 										<td class='contactDept' colspan='2'>복구 폴더 리스트</td>
 									</tr>
 								</table>
-								<div id="folderList" style="width:466px; height:200px; overflow:auto">
+								<div id="folderList" style="width:600px; height:200px; overflow:auto">
 								</div>
 								
 								<br>

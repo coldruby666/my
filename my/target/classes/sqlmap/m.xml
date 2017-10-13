@@ -740,7 +740,7 @@
     
     <select id="m_max_seq" resultType="hashmap" >
 		/*m의 max(m_seq)값 조회*/
-		SELECT COALESCE((select max(m_seq) from m)) as max_seq
+		SELECT COALESCE((select ifnull(max(m_seq),0) from m)) as max_seq
 	</select>
     
 </mapper>
